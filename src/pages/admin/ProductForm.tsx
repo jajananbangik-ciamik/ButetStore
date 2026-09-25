@@ -1,7 +1,9 @@
 import { useEffect, useState, type FormEvent } from 'react'
 import { Plus, Trash2 } from 'lucide-react'
+import { ErrorNotice } from '../../components/ErrorNotice'
 import { ImageUploadField } from '../../components/admin/ImageUploadField'
 import { Modal } from '../../components/Modal'
+import { getVideoSource } from '../../lib/utils'
 import type { Product, ProductVariant, Submenu } from '../../types'
 
 type VariantForm = Omit<ProductVariant, 'productId' | 'createdAt' | 'updatedAt'>
@@ -10,7 +12,7 @@ function toVariantForm(variant?: ProductVariant): VariantForm {
   return variant ? { id: variant.id, name: variant.name, price: variant.price, hpp: variant.hpp, trackStock: variant.trackStock, stock: variant.stock, active: variant.active, order: variant.order } : { id: '', name: '', price: 0, hpp: 0, trackStock: true, stock: 0, active: true, order: 1 }
 }
 
-export function ProductForm({ product, submenus, open, onClose, onSave, busy }: { product: Product | null; submenus: Submenu[]; open: boolean; onClose: () => void; onSave: (value: Record<string, unknown>) => Promise<void>; busy: boolean }) {
+export function ProductForm({ product, submenus, open, onClose, onSave, busy, error = '' }: { product: Product | null; submenus: Submenu[]; open: boolean; onClose: () => void; onSave: (value: Record<string, unknown>) => Promise<void>; busy: boolean; error?: string }) {
   const [submenuId, setSubmenuId] = useState('')
   const [name, setName] = useState('')
   const [slug, setSlug] = useState('')
@@ -21,6 +23,7 @@ export function ProductForm({ product, submenus, open, onClose, onSave, busy }: 
   const [trackStock, setTrackStock] = useState(true)
   const [imageUrl, setImageUrl] = useState('')
   const [videoUrl, setVideoUrl] = useState('')
+  const [videoError, setVideoError] = useState('')
   const [featured, setFeatured] = useState(false)
   const [active, setActive] = useState(true)
   const [order, setOrder] = useState(0)
@@ -37,6 +40,7 @@ export function ProductForm({ product, submenus, open, onClose, onSave, busy }: 
     setTrackStock(product?.trackStock ?? true)
     setImageUrl(product?.imageUrl || '')
     setVideoUrl(product?.videoUrl || '')
+    setVideoError('')
     setFeatured(product?.featured ?? false)
     setActive(product?.active ?? true)
     setOrder(product?.order || 0)
@@ -49,12 +53,18 @@ export function ProductForm({ product, submenus, open, onClose, onSave, busy }: 
 
   const submit = (event: FormEvent) => {
     event.preventDefault()
+    if (videoUrl.trim() && !getVideoSource(videoUrl)) {
+      setVideoError('Gunakan link YouTube, Vimeo, atau file video HTTPS yang valid.')
+      return
+    }
+    setVideoError('')
     void onSave({ id: product?.id || '', submenuId, name, slug, description, price, hpp, stock, trackStock, imageUrl, videoUrl, featured, active, order, variants })
   }
 
   return (
     <Modal open={open} title={product ? 'Edit produk' : 'Tambah produk'} onClose={onClose} size="large">
       <form className="form-stack" onSubmit={submit}>
+        <ErrorNotice message={error || videoError} />
         <div className="form-grid">
           <label className="field"><span>Submenu</span><select required value={submenuId} onChange={(event) => setSubmenuId(event.target.value)}>{submenus.map((submenu) => <option key={submenu.id} value={submenu.id}>{submenu.categoryName} · {submenu.name}</option>)}</select></label>
           <label className="field"><span>Nama produk</span><input required value={name} onChange={(event) => setName(event.target.value)} /></label>
@@ -65,7 +75,7 @@ export function ProductForm({ product, submenus, open, onClose, onSave, busy }: 
         </div>
         <label className="field"><span>Deskripsi</span><textarea rows={4} value={description} onChange={(event) => setDescription(event.target.value)} /></label>
         <ImageUploadField label="Foto produk" value={imageUrl} onChange={setImageUrl} />
-        <label className="field field--full"><span>Link video (opsional)</span><input type="url" value={videoUrl} onChange={(event) => setVideoUrl(event.target.value)} placeholder="https://youtu.be/... atau https://.../video.mp4" /></label>
+        <label className="field field--full"><span>Link video (opsional)</span><input type="text" inputMode="url" value={videoUrl} onChange={(event) => { setVideoUrl(event.target.value); setVideoError('') }} placeholder="https://youtu.be/... atau https://.../video.mp4" /></label>
         <small className="muted">Mendukung YouTube, Vimeo, atau file video HTTPS seperti MP4 dan WebM.</small>
         <div className="form-grid form-grid--compact">
           <label className="check-field"><input type="checkbox" checked={trackStock} onChange={(event) => setTrackStock(event.target.checked)} /><span>Lacak stok produk tanpa varian</span></label>

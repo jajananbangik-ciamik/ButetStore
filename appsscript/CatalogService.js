@@ -103,7 +103,7 @@ function toProduct_(row, variants, submenu, category) {
     price: asNumber_(row.price, 0),
     minimumPrice,
     imageUrl: String(row.imageUrl || ''),
-    videoUrl: safeVideoUrl_(row.videoUrl),
+    videoUrl: safeVideoUrlForRead_(row.videoUrl),
     featured: asBoolean_(row.featured),
     active: asBoolean_(row.active),
     trackStock: asBoolean_(row.trackStock),
@@ -299,42 +299,84 @@ function normalizeNonNegativeInteger_(value, label) {
   return number
 }
 
-function safeImageUrl_(value) {
-  const url = cleanText_(value, 1000)
-  if (!url || !/^https:\/\//i.test(url) || /\s/.test(url)) {
-    return ''
+function hasUnsafeUrlCharacters_(value) {
+  if (/\s/.test(value)) {
+    return true
   }
+  for (let index = 0; index < value.length; index += 1) {
+    const code = value.charCodeAt(index)
+    if (code < 32 || code === 127) {
+      return true
+    }
+  }
+  return false
+}
+
+function parseHttpsUrl_(value) {
+  const rawUrl = cleanText_(value, 1000)
+  if (!rawUrl || !/^https:\/\//i.test(rawUrl) || hasUnsafeUrlCharacters_(rawUrl) || rawUrl.indexOf('\\') >= 0) {
+    return null
+  }
+  const authorityStart = 8
+  const authorityTail = rawUrl.slice(authorityStart)
+  const delimiterIndex = authorityTail.search(/[/?#]/)
+  const authorityEnd = delimiterIndex < 0 ? rawUrl.length : authorityStart + delimiterIndex
+  const authority = rawUrl.slice(authorityStart, authorityEnd)
+  if (!authority || authority.indexOf('@') >= 0) {
+    return null
+  }
+  let hostname = authority.toLowerCase()
+  const portIndex = hostname.lastIndexOf(':')
+  if (portIndex >= 0) {
+    const port = hostname.slice(portIndex + 1)
+    if (!/^\d+$/.test(port) || Number(port) !== 443) {
+      return null
+    }
+    hostname = hostname.slice(0, portIndex)
+  }
+  if (!hostname || hostname.length > 253 || !/^(?:[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?)(?:\.[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?)*$/.test(hostname)) {
+    return null
+  }
+  const remainder = rawUrl.slice(authorityEnd)
+  const pathEnd = remainder.search(/[?#]/)
+  return {
+    rawUrl,
+    hostname,
+    pathname: pathEnd < 0 ? remainder : remainder.slice(0, pathEnd),
+  }
+}
+
+function safeImageUrl_(value) {
+  const parsed = parseHttpsUrl_(value)
+  return parsed ? parsed.rawUrl : ''
+}
+
+function safeVideoUrlForRead_(value) {
   try {
-    const parsed = new URL(url)
-    return parsed.protocol === 'https:' ? parsed.toString() : ''
+    return safeVideoUrl_(value)
   } catch (error) {
-    return url
+    return ''
   }
 }
 
 function safeVideoUrl_(value) {
-  const url = cleanText_(value, 1000)
-  if (!url) {
+  const rawUrl = cleanText_(value, 1000)
+  if (!rawUrl) {
     return ''
   }
-  if (!/^https:\/\//i.test(url) || /\s/.test(url)) {
+  if (!/^https:\/\//i.test(rawUrl) || hasUnsafeUrlCharacters_(rawUrl) || rawUrl.indexOf('\\') >= 0) {
     throw new Error('URL video harus menggunakan HTTPS.')
   }
-  let parsed
-  try {
-    parsed = new URL(url)
-  } catch (error) {
+  const parsed = parseHttpsUrl_(rawUrl)
+  if (!parsed) {
     throw new Error('URL video tidak valid.')
   }
-  if (parsed.protocol !== 'https:') {
-    throw new Error('URL video harus menggunakan HTTPS.')
-  }
-  const hostname = parsed.hostname.toLowerCase()
+  const hostname = parsed.hostname
   const isYoutube = hostname === 'youtu.be' || hostname === 'youtube.com' || hostname.endsWith('.youtube.com') || hostname === 'youtube-nocookie.com' || hostname.endsWith('.youtube-nocookie.com')
   const isVimeo = hostname === 'vimeo.com' || hostname.endsWith('.vimeo.com') || hostname === 'player.vimeo.com'
   const isDirectVideo = /\.(mp4|webm|ogg|mov|m4v)$/i.test(parsed.pathname)
   if (!isYoutube && !isVimeo && !isDirectVideo) {
     throw new Error('URL video harus YouTube, Vimeo, atau file video HTTPS.')
   }
-  return parsed.toString()
+  return parsed.rawUrl
 }

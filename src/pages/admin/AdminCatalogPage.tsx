@@ -116,7 +116,7 @@ export function AdminCatalogPage() {
 
       {editor?.type === 'categories' && <CategoryForm open category={editor.value as Category | null} onClose={() => setEditor(null)} onSave={save} busy={saving} />}
       {editor?.type === 'submenus' && <SubmenuForm open submenu={editor.value as Submenu | null} categories={catalog.categories} onClose={() => setEditor(null)} onSave={save} busy={saving} />}
-      {editor?.type === 'products' && <ProductForm open product={editor.value as Product | null} submenus={catalog.submenus} onClose={() => setEditor(null)} onSave={save} busy={saving} />}
+      {editor?.type === 'products' && <ProductForm open product={editor.value as Product | null} submenus={catalog.submenus} onClose={() => setEditor(null)} onSave={save} busy={saving} error={error} />}
     </div>
   )
 }

@@ -1,9 +1,23 @@
+import { readFileSync } from 'node:fs'
+import { resolve } from 'node:path'
 import { render, screen } from '@testing-library/react'
 import { describe, expect, it } from 'vitest'
 import { formatRupiah, statusLabel } from '../lib/format'
 import { cartSubtotal, resolveCartLines } from '../lib/cart'
 import { getVideoSource } from '../lib/utils'
 import type { Product } from '../types'
+
+const catalogServiceSource = readFileSync(resolve('appsscript/CatalogService.js'), 'utf8')
+
+function createCatalogService() {
+  const factory = new Function('APP_CONFIG', 'SHEET_NAMES', 'cleanText_', 'URL', `${catalogServiceSource}\nreturn { safeImageUrl_, safeVideoUrl_, safeVideoUrlForRead_ }`)
+  return factory(
+    { maximumTextLength: 1000 },
+    {},
+    (value: unknown, maxLength = 1000) => String(value ?? '').trim().slice(0, maxLength),
+    undefined,
+  )
+}
 
 const product: Product = {
   id: 'p1',
@@ -74,12 +88,34 @@ describe('cart helpers', () => {
 describe('video helpers', () => {
   it('creates a privacy-friendly YouTube embed URL', () => {
     expect(getVideoSource('https://youtu.be/abc12345678')).toEqual({ type: 'embed', src: 'https://www.youtube-nocookie.com/embed/abc12345678' })
+    expect(getVideoSource('https://www.youtube.com/watch?v=abc12345678')).toEqual({ type: 'embed', src: 'https://www.youtube-nocookie.com/embed/abc12345678' })
   })
 
   it('accepts direct HTTPS video files and rejects unsafe URLs', () => {
     expect(getVideoSource('https://cdn.example.com/video.mp4')).toEqual({ type: 'file', src: 'https://cdn.example.com/video.mp4' })
     expect(getVideoSource('http://cdn.example.com/video.mp4')).toBeNull()
     expect(getVideoSource('javascript:alert(1)')).toBeNull()
+  })
+})
+
+describe('backend video URL validation', () => {
+  const service = createCatalogService()
+
+  it('accepts common YouTube links without the browser URL global', () => {
+    expect(service.safeVideoUrl_('https://www.youtube.com/watch?v=abc12345678&t=10')).toBe('https://www.youtube.com/watch?v=abc12345678&t=10')
+    expect(service.safeVideoUrl_('https://youtu.be/abc12345678?si=abc')).toBe('https://youtu.be/abc12345678?si=abc')
+    expect(service.safeVideoUrl_('https://www.youtube.com/shorts/abc12345678')).toBe('https://www.youtube.com/shorts/abc12345678')
+  })
+
+  it('accepts direct HTTPS video files with query strings', () => {
+    expect(service.safeVideoUrl_('https://cdn.example.com/video.mp4?token=abc#t=10')).toBe('https://cdn.example.com/video.mp4?token=abc#t=10')
+    expect(service.safeImageUrl_('https://drive.google.com/uc?export=view&id=abc')).toBe('https://drive.google.com/uc?export=view&id=abc')
+  })
+
+  it('rejects unsafe links and hides invalid legacy values', () => {
+    expect(() => service.safeVideoUrl_('http://www.youtube.com/watch?v=abc12345678')).toThrow('HTTPS')
+    expect(() => service.safeVideoUrl_('https://example.com/video.mp4x')).toThrow('YouTube')
+    expect(service.safeVideoUrlForRead_('https://example.com/not-a-video')).toBe('')
   })
 })
 

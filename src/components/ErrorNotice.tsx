@@ -5,7 +5,7 @@ export function ErrorNotice({ message, action }: { message: string; action?: Rea
     return null
   }
   return (
-    <div className="notice notice--error" role="alert">
+    <div className="notice notice--danger" role="alert">
       <AlertCircle aria-hidden="true" />
       <span>{message}</span>
       {action}
