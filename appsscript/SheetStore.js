@@ -32,9 +32,16 @@ function ensureSheet_(name) {
     sheet.setFrozenRows(1)
     sheet.getRange(1, 1, 1, headers.length).setFontWeight('bold')
   } else {
-    const currentHeaders = sheet.getRange(1, 1, 1, headers.length).getDisplayValues()[0]
-    if (headers.some((header, index) => currentHeaders[index] !== header)) {
+    const currentColumnCount = sheet.getLastColumn()
+    const currentHeaders = sheet.getRange(1, 1, 1, Math.min(currentColumnCount, headers.length)).getDisplayValues()[0]
+    if (headers.slice(0, currentHeaders.length).some((header, index) => currentHeaders[index] !== header)) {
       throw new Error('Struktur sheet ' + name + ' tidak sesuai.')
+    }
+    if (currentColumnCount < headers.length) {
+      const missingHeaders = headers.slice(currentColumnCount)
+      const missingRange = sheet.getRange(1, currentColumnCount + 1, 1, missingHeaders.length)
+      missingRange.setValues([missingHeaders])
+      missingRange.setFontWeight('bold')
     }
   }
   return sheet

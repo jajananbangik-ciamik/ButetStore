@@ -26,7 +26,7 @@ const SHEET_NAMES = Object.freeze({
 const SHEET_SCHEMAS = Object.freeze({
   [SHEET_NAMES.categories]: ['id', 'name', 'slug', 'order', 'active', 'createdAt', 'updatedAt'],
   [SHEET_NAMES.submenus]: ['id', 'categoryId', 'name', 'slug', 'description', 'imageUrl', 'order', 'active', 'createdAt', 'updatedAt'],
-  [SHEET_NAMES.products]: ['id', 'submenuId', 'name', 'slug', 'description', 'price', 'imageUrl', 'featured', 'active', 'trackStock', 'stock', 'hpp', 'order', 'createdAt', 'updatedAt'],
+  [SHEET_NAMES.products]: ['id', 'submenuId', 'name', 'slug', 'description', 'price', 'imageUrl', 'featured', 'active', 'trackStock', 'stock', 'hpp', 'order', 'createdAt', 'updatedAt', 'videoUrl'],
   [SHEET_NAMES.variants]: ['id', 'productId', 'name', 'price', 'trackStock', 'stock', 'hpp', 'active', 'order', 'createdAt', 'updatedAt'],
   [SHEET_NAMES.orders]: ['id', 'requestKey', 'code', 'createdAt', 'customerName', 'phone', 'address', 'notes', 'paymentMethod', 'subtotal', 'shipping', 'total', 'status', 'stockDeducted', 'courier', 'trackingNumber', 'adminNotes', 'paidAt', 'orderedAt', 'shippedAt', 'completedAt', 'cancelledAt', 'updatedAt'],
   [SHEET_NAMES.orderDetails]: ['orderId', 'productId', 'variantId', 'productName', 'variantName', 'quantity', 'unitPrice', 'unitHpp', 'subtotal', 'hppTotal'],

@@ -1,6 +1,9 @@
-import { createContext, useCallback, useContext, useEffect, useMemo, useState, type ReactNode } from 'react'
+import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState, type ReactNode } from 'react'
+import { useLocation } from 'react-router-dom'
 import { apiGet, isApiConfigured } from '../lib/api'
 import type { CatalogData } from '../types'
+
+const CATALOG_POLL_INTERVAL = 30000
 
 const fallbackCatalog: CatalogData = {
   categories: [
@@ -31,23 +34,32 @@ const fallbackCatalog: CatalogData = {
 interface CatalogContextValue extends CatalogData {
   loading: boolean
   error: string
-  refresh: () => Promise<void>
+  refresh: (silent?: boolean) => Promise<void>
 }
 
 const CatalogContext = createContext<CatalogContextValue | null>(null)
 
 export function CatalogProvider({ children }: { children: ReactNode }) {
+  const location = useLocation()
+  const isAdminRoute = location.pathname.startsWith('/admin')
   const [catalog, setCatalog] = useState<CatalogData>(fallbackCatalog)
   const [loading, setLoading] = useState(isApiConfigured)
   const [error, setError] = useState('')
+  const refreshing = useRef(false)
 
-  const refresh = useCallback(async () => {
+  const refresh = useCallback(async (silent = false) => {
     if (!isApiConfigured) {
       setLoading(false)
       return
     }
-    setLoading(true)
-    setError('')
+    if (refreshing.current) {
+      return
+    }
+    refreshing.current = true
+    if (!silent) {
+      setLoading(true)
+      setError('')
+    }
     try {
       const data = await apiGet<CatalogData>('bootstrap')
       const incomingSettings = data.settings || fallbackCatalog.settings
@@ -58,23 +70,51 @@ export function CatalogProvider({ children }: { children: ReactNode }) {
       setCatalog({
         categories: data.categories || [],
         submenus: data.submenus || [],
-        products: data.products || [],
+        products: (data.products || []).map((product) => ({ ...product, videoUrl: product.videoUrl || '' })),
         settings: {
           ...fallbackCatalog.settings,
           ...incomingSettings,
           bankAccounts: incomingBankAccounts.length ? incomingBankAccounts : legacyBankAccounts,
         },
       })
+      setError('')
     } catch (reason) {
-      setError(reason instanceof Error ? reason.message : 'Katalog belum dapat dimuat.')
+      if (!silent) {
+        setError(reason instanceof Error ? reason.message : 'Katalog belum dapat dimuat.')
+      }
     } finally {
-      setLoading(false)
+      refreshing.current = false
+      if (!silent) {
+        setLoading(false)
+      }
     }
   }, [])
 
   useEffect(() => {
     void refresh()
   }, [refresh])
+
+  useEffect(() => {
+    if (isAdminRoute) {
+      return
+    }
+    const poll = () => {
+      if (document.visibilityState === 'visible') {
+        void refresh(true)
+      }
+    }
+    const interval = window.setInterval(poll, CATALOG_POLL_INTERVAL)
+    const handleVisibility = () => {
+      if (document.visibilityState === 'visible') {
+        poll()
+      }
+    }
+    document.addEventListener('visibilitychange', handleVisibility)
+    return () => {
+      window.clearInterval(interval)
+      document.removeEventListener('visibilitychange', handleVisibility)
+    }
+  }, [isAdminRoute, refresh])
 
   const value = useMemo(() => ({ ...catalog, loading, error, refresh }), [catalog, loading, error, refresh])
   return <CatalogContext.Provider value={value}>{children}</CatalogContext.Provider>

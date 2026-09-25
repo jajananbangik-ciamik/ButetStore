@@ -2,6 +2,7 @@ import { render, screen } from '@testing-library/react'
 import { describe, expect, it } from 'vitest'
 import { formatRupiah, statusLabel } from '../lib/format'
 import { cartSubtotal, resolveCartLines } from '../lib/cart'
+import { getVideoSource } from '../lib/utils'
 import type { Product } from '../types'
 
 const product: Product = {
@@ -16,6 +17,7 @@ const product: Product = {
   price: 25000,
   minimumPrice: 25000,
   imageUrl: '',
+  videoUrl: '',
   featured: true,
   active: true,
   trackStock: true,
@@ -47,6 +49,18 @@ describe('cart helpers', () => {
     const lines = resolveCartLines([{ productId: 'p1', quantity: 9 }], [unlimited])
     expect(lines[0].availableStock).toBeNull()
     expect(lines[0].quantity).toBe(9)
+  })
+})
+
+describe('video helpers', () => {
+  it('creates a privacy-friendly YouTube embed URL', () => {
+    expect(getVideoSource('https://youtu.be/abc12345678')).toEqual({ type: 'embed', src: 'https://www.youtube-nocookie.com/embed/abc12345678' })
+  })
+
+  it('accepts direct HTTPS video files and rejects unsafe URLs', () => {
+    expect(getVideoSource('https://cdn.example.com/video.mp4')).toEqual({ type: 'file', src: 'https://cdn.example.com/video.mp4' })
+    expect(getVideoSource('http://cdn.example.com/video.mp4')).toBeNull()
+    expect(getVideoSource('javascript:alert(1)')).toBeNull()
   })
 })
 

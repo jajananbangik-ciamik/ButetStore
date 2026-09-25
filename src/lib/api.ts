@@ -20,7 +20,7 @@ async function request<T>(url: string, init: RequestInit): Promise<T> {
   const controller = new AbortController()
   const timeout = window.setTimeout(() => controller.abort(), 30000)
   try {
-    const response = await fetch(url, { ...init, signal: controller.signal, credentials: 'omit' })
+    const response = await fetch(url, { ...init, signal: controller.signal, credentials: 'omit', cache: 'no-store' })
     const text = await response.text()
     let payload: Record<string, unknown>
     try {

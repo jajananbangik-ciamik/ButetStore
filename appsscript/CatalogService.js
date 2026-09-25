@@ -101,6 +101,7 @@ function toProduct_(row, variants, submenu, category) {
     price: asNumber_(row.price, 0),
     minimumPrice,
     imageUrl: String(row.imageUrl || ''),
+    videoUrl: safeVideoUrl_(row.videoUrl),
     featured: asBoolean_(row.featured),
     active: asBoolean_(row.active),
     trackStock: asBoolean_(row.trackStock),
@@ -228,6 +229,7 @@ function saveProduct_(payload) {
     description: cleanText_(payload.description, 1200),
     price: normalizeMoney_(payload.price, 'Harga produk'),
     imageUrl: safeImageUrl_(payload.imageUrl),
+    videoUrl: safeVideoUrl_(payload.videoUrl),
     featured: payload.featured === true,
     active: payload.active !== false,
     trackStock: payload.trackStock === true,
@@ -306,4 +308,31 @@ function safeImageUrl_(value) {
   } catch (error) {
     return url
   }
+}
+
+function safeVideoUrl_(value) {
+  const url = cleanText_(value, 1000)
+  if (!url) {
+    return ''
+  }
+  if (!/^https:\/\//i.test(url) || /\s/.test(url)) {
+    throw new Error('URL video harus menggunakan HTTPS.')
+  }
+  let parsed
+  try {
+    parsed = new URL(url)
+  } catch (error) {
+    throw new Error('URL video tidak valid.')
+  }
+  if (parsed.protocol !== 'https:') {
+    throw new Error('URL video harus menggunakan HTTPS.')
+  }
+  const hostname = parsed.hostname.toLowerCase()
+  const isYoutube = hostname === 'youtu.be' || hostname === 'youtube.com' || hostname.endsWith('.youtube.com') || hostname === 'youtube-nocookie.com' || hostname.endsWith('.youtube-nocookie.com')
+  const isVimeo = hostname === 'vimeo.com' || hostname.endsWith('.vimeo.com') || hostname === 'player.vimeo.com'
+  const isDirectVideo = /\.(mp4|webm|ogg|mov|m4v)$/i.test(parsed.pathname)
+  if (!isYoutube && !isVimeo && !isDirectVideo) {
+    throw new Error('URL video harus YouTube, Vimeo, atau file video HTTPS.')
+  }
+  return parsed.toString()
 }

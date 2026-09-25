@@ -58,6 +58,7 @@ export interface Product {
   price: number
   minimumPrice: number
   imageUrl: string
+  videoUrl: string
   featured: boolean
   active: boolean
   trackStock: boolean

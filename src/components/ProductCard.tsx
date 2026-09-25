@@ -1,7 +1,8 @@
 import { useState } from 'react'
-import { Plus, ShoppingBag } from 'lucide-react'
+import { Play, Plus, ShoppingBag } from 'lucide-react'
 import { useCart } from '../context/CartContext'
 import { formatRupiah } from '../lib/format'
+import { getVideoSource } from '../lib/utils'
 import type { Product } from '../types'
 import { ProductImage } from './ProductImage'
 import { ProductModal } from './ProductModal'
@@ -10,6 +11,7 @@ export function ProductCard({ product }: { product: Product }) {
   const { addItem, openCart } = useCart()
   const [modalOpen, setModalOpen] = useState(false)
   const hasVariants = product.variants.some((variant) => variant.active)
+  const hasVideo = Boolean(getVideoSource(product.videoUrl))
   const outOfStock = product.trackStock && product.stock <= 0
 
   const add = () => {
@@ -26,6 +28,7 @@ export function ProductCard({ product }: { product: Product }) {
       <article className="product-card">
         <div className="product-card__image-wrap">
           <ProductImage src={product.imageUrl} alt={product.name} className="product-card__image" />
+          {hasVideo && <button className="product-card__play" type="button" onClick={() => setModalOpen(true)} aria-label={`Putar video ${product.name}`}><Play aria-hidden="true" /></button>}
           {product.featured && <span className="product-card__badge">Unggulan</span>}
           {outOfStock && <span className="product-card__sold">Stok habis</span>}
         </div>

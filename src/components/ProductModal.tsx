@@ -1,7 +1,8 @@
 import { useEffect, useMemo, useState } from 'react'
-import { Minus, Plus, ShoppingBag } from 'lucide-react'
+import { Minus, Play, Plus, ShoppingBag } from 'lucide-react'
 import { useCart } from '../context/CartContext'
 import { formatRupiah } from '../lib/format'
+import { getVideoSource } from '../lib/utils'
 import type { Product } from '../types'
 import { Modal } from './Modal'
 import { ProductImage } from './ProductImage'
@@ -9,6 +10,7 @@ import { ProductImage } from './ProductImage'
 export function ProductModal({ product, open, onClose }: { product: Product | null; open: boolean; onClose: () => void }) {
   const { addItem, openCart } = useCart()
   const availableVariants = useMemo(() => product?.variants.filter((variant) => variant.active) || [], [product])
+  const videoSource = useMemo(() => getVideoSource(product?.videoUrl), [product])
   const [variantId, setVariantId] = useState('')
   const [quantity, setQuantity] = useState(1)
 
@@ -46,6 +48,14 @@ export function ProductModal({ product, open, onClose }: { product: Product | nu
         <div className="product-modal__content">
           <p className="eyebrow">{product.categoryName} · {product.submenuName}</p>
           <p className="product-modal__description">{product.description || 'Pilih varian dan jumlah sebelum memasukkan ke keranjang.'}</p>
+          {videoSource && (
+            <div className="product-video">
+              <div className="product-video__heading"><Play aria-hidden="true" /> Video produk</div>
+              {videoSource.type === 'embed'
+                ? <iframe className="product-video__frame" src={videoSource.src} title={`Video ${product.name}`} loading="lazy" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" allowFullScreen />
+                : <video className="product-video__frame" src={videoSource.src} controls preload="metadata" poster={product.imageUrl || undefined} />}
+            </div>
+          )}
           {requiresVariant && (
             <fieldset className="variant-fieldset">
               <legend>Pilih varian</legend>

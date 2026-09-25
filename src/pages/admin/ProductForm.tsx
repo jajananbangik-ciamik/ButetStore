@@ -20,6 +20,7 @@ export function ProductForm({ product, submenus, open, onClose, onSave, busy }: 
   const [stock, setStock] = useState(0)
   const [trackStock, setTrackStock] = useState(true)
   const [imageUrl, setImageUrl] = useState('')
+  const [videoUrl, setVideoUrl] = useState('')
   const [featured, setFeatured] = useState(false)
   const [active, setActive] = useState(true)
   const [order, setOrder] = useState(0)
@@ -35,6 +36,7 @@ export function ProductForm({ product, submenus, open, onClose, onSave, busy }: 
     setStock(product?.stock || 0)
     setTrackStock(product?.trackStock ?? true)
     setImageUrl(product?.imageUrl || '')
+    setVideoUrl(product?.videoUrl || '')
     setFeatured(product?.featured ?? false)
     setActive(product?.active ?? true)
     setOrder(product?.order || 0)
@@ -47,7 +49,7 @@ export function ProductForm({ product, submenus, open, onClose, onSave, busy }: 
 
   const submit = (event: FormEvent) => {
     event.preventDefault()
-    void onSave({ id: product?.id || '', submenuId, name, slug, description, price, hpp, stock, trackStock, imageUrl, featured, active, order, variants })
+    void onSave({ id: product?.id || '', submenuId, name, slug, description, price, hpp, stock, trackStock, imageUrl, videoUrl, featured, active, order, variants })
   }
 
   return (
@@ -63,6 +65,8 @@ export function ProductForm({ product, submenus, open, onClose, onSave, busy }: 
         </div>
         <label className="field"><span>Deskripsi</span><textarea rows={4} value={description} onChange={(event) => setDescription(event.target.value)} /></label>
         <ImageUploadField label="Foto produk" value={imageUrl} onChange={setImageUrl} />
+        <label className="field field--full"><span>Link video (opsional)</span><input type="url" value={videoUrl} onChange={(event) => setVideoUrl(event.target.value)} placeholder="https://youtu.be/... atau https://.../video.mp4" /></label>
+        <small className="muted">Mendukung YouTube, Vimeo, atau file video HTTPS seperti MP4 dan WebM.</small>
         <div className="form-grid form-grid--compact">
           <label className="check-field"><input type="checkbox" checked={trackStock} onChange={(event) => setTrackStock(event.target.checked)} /><span>Lacak stok produk tanpa varian</span></label>
           <label className="field"><span>Stok produk</span><input type="number" min={0} value={stock} disabled={!trackStock} onChange={(event) => setStock(Number(event.target.value) || 0)} /></label>
