@@ -52,7 +52,7 @@ export function MenuPage() {
             <div className="submenu-grid">
               {submenusForCategory.map((submenu) => (
                 <Link key={submenu.id} to={`/menu/${category.slug}/${submenu.slug}`} className="submenu-card">
-                  <span><Shapes aria-hidden="true" /></span>
+                  <span className="submenu-card__visual">{submenu.imageUrl ? <img src={submenu.imageUrl} alt="" loading="lazy" /> : <Shapes aria-hidden="true" />}</span>
                   <div><h3>{submenu.name}</h3><p>{submenu.description || `${products.filter((product) => product.submenuId === submenu.id).length} produk`}</p></div>
                   <ChevronRight aria-hidden="true" />
                 </Link>

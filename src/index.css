@@ -177,8 +177,9 @@ strong { font-weight: 800; }
 .submenu-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px; }
 .submenu-card { display: flex; min-height: 116px; align-items: center; gap: 13px; padding: 17px; border: 1px solid var(--line); border-radius: 18px; background: var(--surface); box-shadow: var(--shadow-sm); transition: border-color .2s ease, box-shadow .2s ease, transform .2s ease; }
 .submenu-card:hover { border-color: var(--pink); box-shadow: var(--shadow-md); transform: translateY(-3px); }
-.submenu-card > span { display: grid; width: 43px; height: 43px; flex: 0 0 auto; place-items: center; border-radius: 14px; color: #a36bba; background: var(--purple-soft); }
+.submenu-card > span { display: grid; width: 43px; height: 43px; flex: 0 0 auto; place-items: center; overflow: hidden; border-radius: 14px; color: #a36bba; background: var(--purple-soft); }
 .submenu-card > span svg { width: 21px; }
+.submenu-card__visual img { width: 100%; height: 100%; object-fit: cover; }
 .submenu-card > div { min-width: 0; flex: 1; }
 .submenu-card h3 { color: var(--ink); }
 .submenu-card p { margin-top: 5px; overflow: hidden; font-size: .77rem; text-overflow: ellipsis; white-space: nowrap; }
