@@ -121,7 +121,7 @@ export function AdminSettingsPage() {
             <label className="field field--full"><span>Tagline</span><input value={form.tagline} onChange={(event) => setValue('tagline', event.target.value)} /></label>
           </div>
           <div className="admin-panel__heading"><div><h2><WalletCards aria-hidden="true" /> Pembayaran</h2><p>QRIS dan rekening dapat diisi tanpa mengubah kode aplikasi.</p></div></div>
-          <ImageUploadField label="Gambar QRIS" value={form.qrisImageUrl} onChange={(value) => setValue('qrisImageUrl', value)} />
+          <ImageUploadField label="Gambar QRIS" value={form.qrisImageUrl} onChange={(value) => setValue('qrisImageUrl', value)} compression="qris" />
           <div className="bank-account-list">
             {form.bankAccounts.length ? form.bankAccounts.map((account, index) => (
               <div className="bank-account-editor" key={account.id || `new-${index}`}>
