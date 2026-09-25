@@ -1,4 +1,5 @@
 import { useState, type FormEvent } from 'react'
+import { useNavigate } from 'react-router-dom'
 import { LockKeyhole, LogIn, ShieldCheck } from 'lucide-react'
 import { Brand } from '../../components/Brand'
 import { ErrorNotice } from '../../components/ErrorNotice'
@@ -7,6 +8,7 @@ import { useDocumentTitle } from '../../hooks/useDocumentTitle'
 
 export function AdminLoginPage() {
   const { login } = useAdminAuth()
+  const navigate = useNavigate()
   const [username, setUsername] = useState('admin')
   const [password, setPassword] = useState('')
   const [loading, setLoading] = useState(false)
@@ -19,6 +21,7 @@ export function AdminLoginPage() {
     setLoading(true)
     try {
       await login(username, password)
+      navigate('/admin', { replace: true })
     } catch (reason) {
       setError(reason instanceof Error ? reason.message : 'Login gagal.')
     } finally {
