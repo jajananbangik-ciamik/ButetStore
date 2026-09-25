@@ -1,0 +1,16 @@
+{
+  "name": "BUTET STORE",
+  "short_name": "BUTET",
+  "description": "Solusi belanja sehari-hari. Produk OK, Harga Hemat!!",
+  "start_url": "./",
+  "display": "standalone",
+  "background_color": "#fffaf4",
+  "theme_color": "#f7a8bd",
+  "icons": [
+    {
+      "src": "./favicon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml"
+    }
+  ]
+}
