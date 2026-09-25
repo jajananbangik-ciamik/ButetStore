@@ -31,6 +31,13 @@ export function OrderSuccessPage() {
     )
   }
 
+  const configuredBankAccounts = Array.isArray(settings.bankAccounts) ? settings.bankAccounts : []
+  const bankAccounts = configuredBankAccounts.length
+    ? configuredBankAccounts
+    : settings.bankName && settings.bankAccountNumber && settings.bankAccountHolder
+      ? [{ id: 'legacy-bank-1', bankName: settings.bankName, accountNumber: settings.bankAccountNumber, accountHolder: settings.bankAccountHolder }]
+      : []
+
   const copyCode = async () => {
     await navigator.clipboard.writeText(order.code)
     setCopied(true)
@@ -52,7 +59,7 @@ export function OrderSuccessPage() {
         {order.paymentMethod === 'QRIS' ? (
           <><div className="payment-detail-card__heading"><QrCode aria-hidden="true" /><div><h2>Bayar dengan QRIS</h2><p>{settings.paymentInstructions}</p></div></div>{settings.qrisImageUrl && <img className="qris-image" src={settings.qrisImageUrl} alt="Kode QRIS BUTET STORE" />}</>
         ) : (
-          <><div className="payment-detail-card__heading"><Banknote aria-hidden="true" /><div><h2>Transfer bank</h2><p>{settings.paymentInstructions}</p></div></div><dl className="bank-details"><div><dt>Bank</dt><dd>{settings.bankName}</dd></div><div><dt>Nomor rekening</dt><dd>{settings.bankAccountNumber}</dd></div><div><dt>Atas nama</dt><dd>{settings.bankAccountHolder}</dd></div></dl></>
+          <><div className="payment-detail-card__heading"><Banknote aria-hidden="true" /><div><h2>Transfer bank</h2><p>{settings.paymentInstructions}</p></div></div><div className="bank-accounts">{bankAccounts.map((account) => <section className="bank-account" key={account.id}><h3>{account.bankName}</h3><dl className="bank-details"><div><dt>Nomor rekening</dt><dd>{account.accountNumber}</dd></div><div><dt>Atas nama</dt><dd>{account.accountHolder}</dd></div></dl></section>)}</div></>
         )}
         <div className="shipping-note"><Truck aria-hidden="true" /><span><strong>Catatan pengiriman</strong>{settings.shippingNote}</span></div>
       </section>

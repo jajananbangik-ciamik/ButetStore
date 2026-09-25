@@ -77,6 +77,13 @@ export interface PromoSettings {
   link: string
 }
 
+export interface BankAccount {
+  id: string
+  bankName: string
+  accountNumber: string
+  accountHolder: string
+}
+
 export interface StoreSettings {
   storeName: string
   slogan: string
@@ -84,6 +91,7 @@ export interface StoreSettings {
   storePhone: string
   paymentInstructions: string
   qrisImageUrl: string
+  bankAccounts: BankAccount[]
   bankName: string
   bankAccountNumber: string
   bankAccountHolder: string

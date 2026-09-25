@@ -19,6 +19,7 @@ const fallbackCatalog: CatalogData = {
     storePhone: '',
     paymentInstructions: 'Selesaikan pembayaran sesuai metode yang dipilih, lalu tunggu konfirmasi admin.',
     qrisImageUrl: '',
+    bankAccounts: [],
     bankName: '',
     bankAccountNumber: '',
     bankAccountHolder: '',
@@ -49,11 +50,20 @@ export function CatalogProvider({ children }: { children: ReactNode }) {
     setError('')
     try {
       const data = await apiGet<CatalogData>('bootstrap')
+      const incomingSettings = data.settings || fallbackCatalog.settings
+      const incomingBankAccounts = Array.isArray(incomingSettings.bankAccounts) ? incomingSettings.bankAccounts : []
+      const legacyBankAccounts = incomingSettings.bankName && incomingSettings.bankAccountNumber && incomingSettings.bankAccountHolder
+        ? [{ id: 'legacy-bank-1', bankName: incomingSettings.bankName, accountNumber: incomingSettings.bankAccountNumber, accountHolder: incomingSettings.bankAccountHolder }]
+        : []
       setCatalog({
         categories: data.categories || [],
         submenus: data.submenus || [],
         products: data.products || [],
-        settings: data.settings || fallbackCatalog.settings,
+        settings: {
+          ...fallbackCatalog.settings,
+          ...incomingSettings,
+          bankAccounts: incomingBankAccounts.length ? incomingBankAccounts : legacyBankAccounts,
+        },
       })
     } catch (reason) {
       setError(reason instanceof Error ? reason.message : 'Katalog belum dapat dimuat.')

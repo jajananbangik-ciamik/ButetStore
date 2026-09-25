@@ -15,7 +15,7 @@ import { SubmenuForm } from './SubmenuForm'
 type Tab = 'categories' | 'submenus' | 'products'
 type Editor = { type: Tab; value: Category | Submenu | Product | null } | null
 
-const emptyCatalog: CatalogData = { categories: [], submenus: [], products: [], settings: { storeName: '', slogan: '', tagline: '', storePhone: '', paymentInstructions: '', qrisImageUrl: '', bankName: '', bankAccountNumber: '', bankAccountHolder: '', shippingNote: '', promo: { active: false, title: '', message: '', imageUrl: '', link: '' } } }
+const emptyCatalog: CatalogData = { categories: [], submenus: [], products: [], settings: { storeName: '', slogan: '', tagline: '', storePhone: '', paymentInstructions: '', qrisImageUrl: '', bankAccounts: [], bankName: '', bankAccountNumber: '', bankAccountHolder: '', shippingNote: '', promo: { active: false, title: '', message: '', imageUrl: '', link: '' } } }
 
 export function AdminCatalogPage() {
   const { session } = useAdminAuth()
@@ -36,7 +36,9 @@ export function AdminCatalogPage() {
     setError('')
     try {
       const data = await adminPost<CatalogData>(session.sessionToken, 'getAdminCatalog')
-      setCatalog({ ...emptyCatalog, ...data, settings: data.settings || emptyCatalog.settings })
+      const settings = data.settings || emptyCatalog.settings
+      const bankAccounts = Array.isArray(settings.bankAccounts) ? settings.bankAccounts : []
+      setCatalog({ ...emptyCatalog, ...data, settings: { ...emptyCatalog.settings, ...settings, bankAccounts } })
     } catch (reason) {
       setError(reason instanceof Error ? reason.message : 'Katalog belum dapat dimuat.')
     } finally {

@@ -1,16 +1,20 @@
 import { useEffect, useState, type FormEvent } from 'react'
-import { Eye, KeyRound, Save, ShieldCheck, Store, WalletCards } from 'lucide-react'
+import { Eye, KeyRound, Plus, Save, ShieldCheck, Store, Trash2, WalletCards } from 'lucide-react'
 import { ErrorNotice } from '../../components/ErrorNotice'
 import { ImageUploadField } from '../../components/admin/ImageUploadField'
 import { useAdminAuth } from '../../context/AdminAuthContext'
 import { useCatalog } from '../../context/CatalogContext'
 import { adminPost } from '../../lib/adminApi'
-import type { StoreSettings } from '../../types'
+import type { BankAccount, StoreSettings } from '../../types'
+
+function withBankAccounts(value: StoreSettings): StoreSettings {
+  return { ...value, bankAccounts: Array.isArray(value.bankAccounts) ? value.bankAccounts : [] }
+}
 
 export function AdminSettingsPage() {
   const { session, logout } = useAdminAuth()
   const { settings, refresh } = useCatalog()
-  const [form, setForm] = useState<StoreSettings>(settings)
+  const [form, setForm] = useState<StoreSettings>(() => withBankAccounts(settings))
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState('')
   const [success, setSuccess] = useState('')
@@ -22,11 +26,22 @@ export function AdminSettingsPage() {
   const [passwordSaving, setPasswordSaving] = useState(false)
 
   useEffect(() => {
-    setForm(settings)
+    setForm(withBankAccounts(settings))
   }, [settings])
 
   const setValue = (key: keyof StoreSettings, value: string | boolean) => setForm((current) => ({ ...current, [key]: value }))
   const setPromo = (key: keyof StoreSettings['promo'], value: string | boolean) => setForm((current) => ({ ...current, promo: { ...current.promo, [key]: value } }))
+  const addBankAccount = () => setForm((current) => {
+    if (current.bankAccounts.length >= 10) {
+      return current
+    }
+    return { ...current, bankAccounts: [...current.bankAccounts, { id: '', bankName: '', accountNumber: '', accountHolder: '' }] }
+  })
+  const setBankAccount = (index: number, key: Exclude<keyof BankAccount, 'id'>, value: string) => setForm((current) => ({
+    ...current,
+    bankAccounts: current.bankAccounts.map((account, accountIndex) => accountIndex === index ? { ...account, [key]: value } : account),
+  }))
+  const removeBankAccount = (index: number) => setForm((current) => ({ ...current, bankAccounts: current.bankAccounts.filter((_, accountIndex) => accountIndex !== index) }))
 
   const save = async (event: FormEvent) => {
     event.preventDefault()
@@ -37,6 +52,7 @@ export function AdminSettingsPage() {
     setError('')
     setSuccess('')
     try {
+      const primaryBank = form.bankAccounts[0] || { bankName: '', accountNumber: '', accountHolder: '' }
       await adminPost(session.sessionToken, 'saveSettings', {
         STORE_NAME: form.storeName,
         STORE_SLOGAN: form.slogan,
@@ -44,9 +60,10 @@ export function AdminSettingsPage() {
         STORE_PHONE: form.storePhone,
         PAYMENT_INSTRUCTIONS: form.paymentInstructions,
         QRIS_IMAGE_URL: form.qrisImageUrl,
-        BANK_NAME: form.bankName,
-        BANK_ACCOUNT_NUMBER: form.bankAccountNumber,
-        BANK_ACCOUNT_HOLDER: form.bankAccountHolder,
+        BANK_ACCOUNTS_JSON: JSON.stringify(form.bankAccounts),
+        BANK_NAME: primaryBank.bankName,
+        BANK_ACCOUNT_NUMBER: primaryBank.accountNumber,
+        BANK_ACCOUNT_HOLDER: primaryBank.accountHolder,
         SHIPPING_NOTE: form.shippingNote,
         PROMO_ACTIVE: form.promo.active,
         PROMO_TITLE: form.promo.title,
@@ -105,10 +122,20 @@ export function AdminSettingsPage() {
           </div>
           <div className="admin-panel__heading"><div><h2><WalletCards aria-hidden="true" /> Pembayaran</h2><p>QRIS dan rekening dapat diisi tanpa mengubah kode aplikasi.</p></div></div>
           <ImageUploadField label="Gambar QRIS" value={form.qrisImageUrl} onChange={(value) => setValue('qrisImageUrl', value)} />
+          <div className="bank-account-list">
+            {form.bankAccounts.length ? form.bankAccounts.map((account, index) => (
+              <div className="bank-account-editor" key={account.id || `new-${index}`}>
+                <div className="bank-account-editor__heading"><strong>Rekening {index + 1}</strong><button className="button button--soft" type="button" onClick={() => removeBankAccount(index)}><Trash2 aria-hidden="true" /> Hapus</button></div>
+                <div className="form-grid">
+                  <label className="field"><span>Nama bank</span><input value={account.bankName} onChange={(event) => setBankAccount(index, 'bankName', event.target.value)} placeholder="Contoh: Bank XYZ" /></label>
+                  <label className="field"><span>Nomor rekening</span><input value={account.accountNumber} onChange={(event) => setBankAccount(index, 'accountNumber', event.target.value)} /></label>
+                  <label className="field field--full"><span>Atas nama</span><input value={account.accountHolder} onChange={(event) => setBankAccount(index, 'accountHolder', event.target.value)} /></label>
+                </div>
+              </div>
+            )) : <p className="muted">Belum ada rekening. Tambahkan minimal satu rekening agar transfer dapat dipilih.</p>}
+            <button className="button button--soft" type="button" onClick={addBankAccount} disabled={form.bankAccounts.length >= 10}><Plus aria-hidden="true" /> Tambah rekening</button>
+          </div>
           <div className="form-grid">
-            <label className="field"><span>Nama bank</span><input value={form.bankName} onChange={(event) => setValue('bankName', event.target.value)} placeholder="Contoh: Bank XYZ" /></label>
-            <label className="field"><span>Nomor rekening</span><input value={form.bankAccountNumber} onChange={(event) => setValue('bankAccountNumber', event.target.value)} /></label>
-            <label className="field field--full"><span>Atas nama</span><input value={form.bankAccountHolder} onChange={(event) => setValue('bankAccountHolder', event.target.value)} /></label>
             <label className="field field--full"><span>Instruksi pembayaran</span><textarea rows={3} value={form.paymentInstructions} onChange={(event) => setValue('paymentInstructions', event.target.value)} /></label>
             <label className="field field--full"><span>Catatan ongkir</span><input value={form.shippingNote} onChange={(event) => setValue('shippingNote', event.target.value)} /></label>
           </div>

@@ -28,7 +28,7 @@ export function CheckoutPage() {
   useDocumentTitle('Checkout')
 
   const qrisReady = Boolean(settings.qrisImageUrl)
-  const transferReady = Boolean(settings.bankName && settings.bankAccountNumber && settings.bankAccountHolder)
+  const transferReady = settings.bankAccounts.length > 0
   const paymentReady = paymentMethod === 'QRIS' ? qrisReady : transferReady
 
   if (!resolved.length) {

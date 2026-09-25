@@ -8,6 +8,7 @@ const APP_CONFIG = Object.freeze({
   maximumQuantity: 99,
   maximumTextLength: 1000,
   maximumDataUrlLength: 4500000,
+  maximumBankAccounts: 10,
   adminPropertyPrefix: 'BUTET_',
 })
 
@@ -61,6 +62,7 @@ const DEFAULT_SETTINGS = Object.freeze({
   BANK_NAME: '',
   BANK_ACCOUNT_NUMBER: '',
   BANK_ACCOUNT_HOLDER: '',
+  BANK_ACCOUNTS_JSON: '[]',
   SHIPPING_NOTE: 'Biaya ongkir dibayar langsung kepada kurir.',
   PROMO_ACTIVE: 'false',
   PROMO_TITLE: '',

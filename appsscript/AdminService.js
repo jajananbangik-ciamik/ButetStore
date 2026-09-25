@@ -213,21 +213,72 @@ function saveSettings_(payload) {
     STORE_TAGLINE: 200,
     STORE_PHONE: 30,
     PAYMENT_INSTRUCTIONS: 800,
-    BANK_NAME: 100,
-    BANK_ACCOUNT_NUMBER: 100,
-    BANK_ACCOUNT_HOLDER: 150,
     SHIPPING_NOTE: 300,
     PROMO_TITLE: 140,
     PROMO_MESSAGE: 600,
   }
+  const legacyBank = {
+    bankName: cleanText_(payload.BANK_NAME, 100),
+    accountNumber: cleanText_(payload.BANK_ACCOUNT_NUMBER, 100),
+    accountHolder: cleanText_(payload.BANK_ACCOUNT_HOLDER, 150),
+  }
+  const bankAccounts = Object.prototype.hasOwnProperty.call(payload, 'BANK_ACCOUNTS_JSON')
+    ? parseBankAccountsInput_(payload.BANK_ACCOUNTS_JSON)
+    : parseBankAccountsInput_([legacyBank])
   Object.keys(textLimits).forEach((key) => {
     setSetting_(key, cleanText_(payload[key], textLimits[key]))
   })
+  const primaryBank = bankAccounts[0] || {}
+  setSetting_('BANK_ACCOUNTS_JSON', JSON.stringify(bankAccounts))
+  setSetting_('BANK_NAME', primaryBank.bankName || '')
+  setSetting_('BANK_ACCOUNT_NUMBER', primaryBank.accountNumber || '')
+  setSetting_('BANK_ACCOUNT_HOLDER', primaryBank.accountHolder || '')
   setSetting_('QRIS_IMAGE_URL', safeImageUrl_(payload.QRIS_IMAGE_URL))
   setSetting_('PROMO_IMAGE_URL', safeImageUrl_(payload.PROMO_IMAGE_URL))
   setSetting_('PROMO_LINK', safeImageUrl_(payload.PROMO_LINK))
   setSetting_('PROMO_ACTIVE', payload.PROMO_ACTIVE === true ? 'true' : 'false')
   return publicSettings_()
+}
+
+function parseBankAccountsInput_(value) {
+  let accounts = value
+  if (typeof value === 'string') {
+    if (!value.trim()) {
+      accounts = []
+    } else {
+      try {
+        accounts = JSON.parse(value)
+      } catch (error) {
+        throw new Error('Daftar rekening tidak valid.')
+      }
+    }
+  }
+  if (!Array.isArray(accounts)) {
+    throw new Error('Daftar rekening tidak valid.')
+  }
+  if (accounts.length > APP_CONFIG.maximumBankAccounts) {
+    throw new Error('Maksimal ' + APP_CONFIG.maximumBankAccounts + ' rekening dapat disimpan.')
+  }
+  return accounts.map((account, index) => {
+    if (!account || typeof account !== 'object' || Array.isArray(account)) {
+      throw new Error('Rekening ke-' + (index + 1) + ' tidak valid.')
+    }
+    const bankName = cleanText_(account.bankName, 100)
+    const accountNumber = cleanText_(account.accountNumber, 100)
+    const accountHolder = cleanText_(account.accountHolder, 150)
+    if (!bankName && !accountNumber && !accountHolder) {
+      return null
+    }
+    if (!bankName || !accountNumber || !accountHolder) {
+      throw new Error('Rekening ke-' + (index + 1) + ' harus lengkap.')
+    }
+    return {
+      id: cleanText_(account.id, 100) || 'bank-' + Utilities.getUuid().replace(/-/g, '').slice(0, 12),
+      bankName,
+      accountNumber,
+      accountHolder,
+    }
+  }).filter(Boolean)
 }
 
 function getAdminSettings_() {
@@ -244,7 +295,12 @@ function uploadAdminImage_(payload) {
     throw new Error('Ukuran gambar terlalu besar. Maksimal sekitar 3 MB.')
   }
   const bytes = Utilities.base64Decode(match[3])
-  const blob = Utilities.newBlob(bytes, match[1])
+  if (!bytes.length) {
+    throw new Error('File gambar tidak memiliki isi.')
+  }
+  const extension = match[1] === 'image/jpeg' ? 'jpg' : match[1].split('/')[1]
+  const fileName = 'butet-image-' + Utilities.getUuid().replace(/-/g, '').slice(0, 12) + '.' + extension
+  const blob = Utilities.newBlob(bytes, match[1], fileName)
   const folder = getUploadFolder_()
   const file = folder.createFile(blob)
   try {

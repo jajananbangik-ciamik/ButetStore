@@ -152,6 +152,8 @@ function setSetting_(key, value) {
 
 function publicSettings_() {
   const settings = getSettingsMap_()
+  const bankAccounts = bankAccountsFromSettings_(settings)
+  const primaryBank = bankAccounts[0]
   return {
     storeName: settings.STORE_NAME,
     slogan: settings.STORE_SLOGAN,
@@ -159,9 +161,10 @@ function publicSettings_() {
     storePhone: settings.STORE_PHONE,
     paymentInstructions: settings.PAYMENT_INSTRUCTIONS,
     qrisImageUrl: settings.QRIS_IMAGE_URL,
-    bankName: settings.BANK_NAME,
-    bankAccountNumber: settings.BANK_ACCOUNT_NUMBER,
-    bankAccountHolder: settings.BANK_ACCOUNT_HOLDER,
+    bankAccounts,
+    bankName: primaryBank ? primaryBank.bankName : settings.BANK_NAME,
+    bankAccountNumber: primaryBank ? primaryBank.accountNumber : settings.BANK_ACCOUNT_NUMBER,
+    bankAccountHolder: primaryBank ? primaryBank.accountHolder : settings.BANK_ACCOUNT_HOLDER,
     shippingNote: settings.SHIPPING_NOTE,
     promo: {
       active: asBoolean_(settings.PROMO_ACTIVE),
@@ -170,6 +173,57 @@ function publicSettings_() {
       imageUrl: settings.PROMO_IMAGE_URL,
       link: settings.PROMO_LINK,
     },
+  }
+}
+
+function bankAccountsFromSettings_(settings) {
+  const legacyAccount = legacyBankAccount_(settings)
+  const raw = String(settings.BANK_ACCOUNTS_JSON || '').trim()
+  if (!raw) {
+    return legacyAccount ? [legacyAccount] : []
+  }
+  try {
+    const parsed = JSON.parse(raw)
+    if (!Array.isArray(parsed)) {
+      return legacyAccount ? [legacyAccount] : []
+    }
+    const normalized = parsed.map(normalizeStoredBankAccount_).filter(Boolean)
+    return normalized.length ? normalized : legacyAccount ? [legacyAccount] : []
+  } catch (error) {
+    return legacyAccount ? [legacyAccount] : []
+  }
+}
+
+function normalizeStoredBankAccount_(account, index) {
+  if (!account || typeof account !== 'object' || Array.isArray(account)) {
+    return null
+  }
+  const bankName = cleanText_(account.bankName, 100)
+  const accountNumber = cleanText_(account.accountNumber, 100)
+  const accountHolder = cleanText_(account.accountHolder, 150)
+  if (!bankName || !accountNumber || !accountHolder) {
+    return null
+  }
+  return {
+    id: cleanText_(account.id, 100) || 'bank-' + (index + 1),
+    bankName,
+    accountNumber,
+    accountHolder,
+  }
+}
+
+function legacyBankAccount_(settings) {
+  const bankName = cleanText_(settings.BANK_NAME, 100)
+  const accountNumber = cleanText_(settings.BANK_ACCOUNT_NUMBER, 100)
+  const accountHolder = cleanText_(settings.BANK_ACCOUNT_HOLDER, 150)
+  if (!bankName || !accountNumber || !accountHolder) {
+    return null
+  }
+  return {
+    id: 'legacy-bank-1',
+    bankName,
+    accountNumber,
+    accountHolder,
   }
 }
 
