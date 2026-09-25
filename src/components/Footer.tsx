@@ -4,7 +4,7 @@ import { useCatalog } from '../context/CatalogContext'
 import { Brand } from './Brand'
 
 export function Footer() {
-  const { settings } = useCatalog()
+  const { settings, categories } = useCatalog()
   return (
     <footer className="site-footer">
       <div className="container site-footer__grid">
@@ -14,11 +14,7 @@ export function Footer() {
         </div>
         <div>
           <h2>Menu</h2>
-          <Link to="/menu/jajanan-frozen">Jajanan Frozen</Link>
-          <Link to="/menu/minuman">Minuman</Link>
-          <Link to="/menu/lauk-frozen">Lauk Frozen</Link>
-          <Link to="/menu/sprei">Sprei</Link>
-          <Link to="/menu/kaos-premium-confetti">Kaos Premium Confetti</Link>
+          {categories.map((category) => <Link key={category.id} to={`/menu/${category.slug}`}>{category.name}</Link>)}
         </div>
         <div>
           <h2>Bantuan</h2>

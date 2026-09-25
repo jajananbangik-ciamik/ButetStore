@@ -7,7 +7,11 @@ export function resolveCartLines(lines: CartLine[], products: Product[]): Resolv
     if (!product || !product.active) {
       return []
     }
-    const variant = line.variantId ? product.variants.find((item) => item.id === line.variantId && item.active) : undefined
+    const activeVariants = product.variants.filter((item) => item.active)
+    if (activeVariants.length && !line.variantId) {
+      return []
+    }
+    const variant = line.variantId ? activeVariants.find((item) => item.id === line.variantId) : undefined
     if (line.variantId && !variant) {
       return []
     }

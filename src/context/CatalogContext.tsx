@@ -7,11 +7,10 @@ const CATALOG_POLL_INTERVAL = 30000
 
 const fallbackCatalog: CatalogData = {
   categories: [
-    { id: 'kat-jajanan-frozen', name: 'Jajanan Frozen', slug: 'jajanan-frozen', order: 1, active: true },
+    { id: 'kat-jajanan-frozen', name: 'Jajanan', slug: 'jajanan-frozen', order: 1, active: true },
     { id: 'kat-minuman', name: 'Minuman', slug: 'minuman', order: 2, active: true },
     { id: 'kat-lauk-frozen', name: 'Lauk Frozen', slug: 'lauk-frozen', order: 3, active: true },
-    { id: 'kat-sprei', name: 'Sprei', slug: 'sprei', order: 4, active: true },
-    { id: 'kat-kaos-premium-confetti', name: 'Kaos Premium Confetti', slug: 'kaos-premium-confetti', order: 5, active: true },
+    { id: 'kat-kaos-premium-confetti', name: 'Sprei Kaos Premium Confetti', slug: 'sprei-kaos-premium-confetti', order: 4, active: true },
   ],
   submenus: [],
   products: [],

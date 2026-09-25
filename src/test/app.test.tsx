@@ -50,6 +50,25 @@ describe('cart helpers', () => {
     expect(lines[0].availableStock).toBeNull()
     expect(lines[0].quantity).toBe(9)
   })
+
+  it('drops a legacy line when the product now requires a variant', () => {
+    const withVariant = {
+      ...product,
+      variants: [{ id: 'v1', productId: 'p1', name: 'Dosis', price: 25000, hpp: 15000, trackStock: false, stock: 0, active: true, order: 1 }],
+    }
+    expect(resolveCartLines([{ productId: 'p1', quantity: 1 }], [withVariant])).toEqual([])
+  })
+
+  it('uses variant stock settings instead of product stock', () => {
+    const withVariant = {
+      ...product,
+      stock: 0,
+      variants: [{ id: 'v1', productId: 'p1', name: 'Dosis', price: 25000, hpp: 15000, trackStock: false, stock: 0, active: true, order: 1 }],
+    }
+    const lines = resolveCartLines([{ productId: 'p1', variantId: 'v1', quantity: 2 }], [withVariant])
+    expect(lines[0].availableStock).toBeNull()
+    expect(lines[0].quantity).toBe(2)
+  })
 })
 
 describe('video helpers', () => {

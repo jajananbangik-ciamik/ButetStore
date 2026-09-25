@@ -11,7 +11,7 @@ function getCatalog_(includeInactive) {
     .map(toCategory_)
     .sort(sortByOrderAndName_)
   const visibleSubmenus = submenus
-    .filter((row) => !publicMode || (asBoolean_(row.active) && categoryMap.has(String(row.categoryId))))
+    .filter((row) => !publicMode || (asBoolean_(row.active) && categoryMap.has(String(row.categoryId)) && asBoolean_(categoryMap.get(String(row.categoryId)).active)))
     .map((row) => toSubmenu_(row, categoryMap.get(String(row.categoryId))))
     .sort(sortByOrderAndName_)
   const visibleProducts = products
@@ -87,7 +87,9 @@ function toVariant_(row) {
 
 function toProduct_(row, variants, submenu, category) {
   const availablePrices = variants.filter((variant) => variant.active).map((variant) => variant.price)
-  availablePrices.push(asNumber_(row.price, 0))
+  if (!availablePrices.length) {
+    availablePrices.push(asNumber_(row.price, 0))
+  }
   const minimumPrice = availablePrices.length ? Math.min.apply(null, availablePrices) : 0
   return {
     id: String(row.id),

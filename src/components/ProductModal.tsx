@@ -27,9 +27,12 @@ export function ProductModal({ product, open, onClose }: { product: Product | nu
   }
 
   const selectedVariant = availableVariants.find((variant) => variant.id === variantId)
-  const selectedStock = selectedVariant?.trackStock ? selectedVariant.stock : product.trackStock ? product.stock : null
-  const maxQuantity = selectedStock === null ? 99 : Math.max(1, Math.min(99, selectedStock))
   const requiresVariant = availableVariants.length > 0
+  const selectedStock = selectedVariant
+    ? selectedVariant.trackStock ? selectedVariant.stock : null
+    : !requiresVariant && product.trackStock ? product.stock : null
+  const selectedPrice = selectedVariant ? selectedVariant.price : product.price
+  const maxQuantity = selectedStock === null ? 99 : Math.max(1, Math.min(99, selectedStock))
   const canAdd = (!requiresVariant || Boolean(variantId)) && (selectedStock === null || selectedStock > 0)
 
   const submit = () => {
@@ -92,7 +95,7 @@ export function ProductModal({ product, open, onClose }: { product: Product | nu
           </div>
           {selectedStock !== null && <small className="muted">Stok tersedia: {selectedStock}</small>}
           <div className="product-modal__footer">
-            <strong>{formatRupiah((selectedVariant?.price || product.price) * quantity)}</strong>
+            <strong>{formatRupiah(selectedPrice * quantity)}</strong>
             <button className="button button--primary" type="button" disabled={!canAdd} onClick={submit}>
               <ShoppingBag aria-hidden="true" /> Tambah ke keranjang
             </button>
