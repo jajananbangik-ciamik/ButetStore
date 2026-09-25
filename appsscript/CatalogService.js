@@ -297,13 +297,13 @@ function normalizeNonNegativeInteger_(value, label) {
 
 function safeImageUrl_(value) {
   const url = cleanText_(value, 1000)
-  if (!url) {
+  if (!url || !/^https:\/\//i.test(url) || /\s/.test(url)) {
     return ''
   }
   try {
     const parsed = new URL(url)
     return parsed.protocol === 'https:' ? parsed.toString() : ''
   } catch (error) {
-    return ''
+    return url
   }
 }
